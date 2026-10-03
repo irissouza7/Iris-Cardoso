@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quem governa os municípios</title>
+<style>
+  :root {
+    color-scheme: light;
+    --fundo: #f7f6fc;
+    --cartao: #ffffff;
+    --texto: #1c1f3a;
+    --suave: #4d5275;
+    --mudo: #6d7194;
+    --borda: #e2e0f0;
+    --grade: #ecebf5;
+    --azul: #2f5db8;        /* série principal: prefeitos e prefeituras */
+    --azul-escuro: #1f3f86; /* títulos e número herói */
+    --lilas: #9b7bd4;       /* série de comparação: população ou vices */
+    --lilas-claro: #e9e1f8; /* fundo de destaque e "restante" das barras */
+    --azul-claro: #e3ebfa;
+    --neutro: #c9cbdc;      /* sem informação / outros */
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--fundo); color: var(--texto);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 17px; line-height: 1.55; }
+  main { max-width: 1040px; margin: 0 auto; padding: 32px 16px 48px; }
+  .faixa { font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--lilas); margin: 0; }
+  h1 { font-size: clamp(30px, 5.2vw, 50px); line-height: 1.1; margin: 8px 0 14px; color: var(--azul-escuro); letter-spacing: -.01em; }
+  h1 em { font-style: normal; color: var(--azul); background: linear-gradient(transparent 62%, var(--lilas-claro) 62%); }
+  .lead { font-size: clamp(17px, 2.2vw, 20px); color: var(--suave); max-width: 760px; margin: 0; }
+  h2 { font-size: clamp(21px, 3vw, 27px); line-height: 1.25; margin: 0 0 6px; color: var(--azul-escuro); }
+  .passo { display: inline-block; font-size: 12px; font-weight: 700; color: var(--azul); background: var(--azul-claro); border-radius: 999px; padding: 2px 10px; margin-bottom: 10px; }
+  .sub { color: var(--suave); margin: 0 0 18px; max-width: 760px; }
+  section { background: var(--cartao); border: 1px solid var(--borda); border-radius: 16px; padding: 26px 24px; margin-top: 22px; }
+  .nota { font-size: 14px; color: var(--mudo); margin: 14px 0 0; }
+  .num { font-variant-numeric: tabular-nums; }
+
+  /* KPIs */
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-top: 26px; }
+  .kpi { background: var(--cartao); border: 1px solid var(--borda); border-radius: 14px; padding: 14px 16px; }
+  .kpi b { display: block; font-size: 30px; line-height: 1.1; color: var(--azul-escuro); font-variant-numeric: tabular-nums; }
+  .kpi span { font-size: 14px; color: var(--suave); }
+
+  /* Retrato de 100 */
+  .botoes { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 18px; }
+  .botoes button { font: inherit; font-size: 15px; border: 1px solid var(--borda); background: var(--cartao); color: var(--texto); border-radius: 999px; padding: 7px 14px; cursor: pointer; }
+  .botoes button[aria-pressed="true"] { background: var(--azul); border-color: var(--azul); color: #fff; }
+  .botoes button:focus-visible, select:focus-visible { outline: 3px solid var(--lilas); outline-offset: 2px; }
+  .retrato { display: grid; grid-template-columns: minmax(0, 360px) 1fr; gap: 28px; align-items: center; }
+  .grade100 { display: grid; grid-template-columns: repeat(10, 1fr); gap: 5px; }
+  .grade100 i { aspect-ratio: 1; border-radius: 50% 50% 4px 4px; background: var(--neutro); transition: background .35s; }
+  .frase { font-size: clamp(20px, 2.8vw, 26px); line-height: 1.35; margin: 0 0 12px; }
+  .frase b { color: var(--azul); }
+  .legenda { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 14px; color: var(--suave); list-style: none; padding: 0; margin: 0; }
+  .legenda li::before { content: ""; display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; background: var(--c); }
+
+  /* Barras horizontais */
+  .barras { display: grid; gap: 14px; }
+  .linha { display: grid; grid-template-columns: 170px 1fr; gap: 12px; align-items: center; }
+  .rot { font-size: 15px; color: var(--texto); }
+  .rot small { display: block; color: var(--mudo); font-size: 13px; }
+  .trilho { position: relative; height: 22px; background: var(--grade); border-radius: 4px; }
+  .barra { position: absolute; left: 0; top: 0; height: 100%; border-radius: 0 4px 4px 0; background: var(--azul); }
+  .barra.lilas { background: var(--lilas); }
+  .valor { position: absolute; top: 50%; transform: translateY(-50%); font-size: 14px; font-weight: 700; color: var(--texto); padding-left: 6px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .valor.dentro { color: #fff; padding: 0 8px 0 0; }
+  .par .trilho { height: 16px; }
+  .par .trilho + .trilho { margin-top: 3px; }
+
+  /* Funil */
+  .funil { display: grid; gap: 8px; }
+  .degrau { display: grid; grid-template-columns: 200px 1fr; gap: 12px; align-items: center; }
+  .degrau .trilho { height: 34px; background: transparent; }
+  .degrau .barra { border-radius: 4px; }
+  .degrau:last-child .barra { background: var(--lilas); }
+
+  /* Colunas (idade) */
+  .colunas { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; align-items: end; height: 220px; border-bottom: 1px solid var(--neutro); padding-top: 22px; }
+  .col { position: relative; background: var(--azul); border-radius: 4px 4px 0 0; }
+  .col.pico { background: var(--lilas); }
+  .col span { position: absolute; top: -21px; left: 0; right: 0; text-align: center; font-size: 13px; font-weight: 700; color: var(--texto); }
+  .eixo { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; font-size: 13px; color: var(--mudo); text-align: center; margin-top: 6px; }
+
+  .duas { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+  .duas h3 { font-size: 17px; margin: 0 0 12px; color: var(--azul-escuro); }
+
+  /* Estado */
+  .seletor { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 16px; }
+  select { font: inherit; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--borda); background: var(--cartao); color: var(--texto); min-width: 220px; }
+  .ficha { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+  .ficha div { background: var(--fundo); border-radius: 12px; padding: 12px 14px; }
+  .ficha b { display: block; font-size: 24px; color: var(--azul-escuro); font-variant-numeric: tabular-nums; }
+  .ficha span { font-size: 13px; color: var(--suave); }
+  .ficha em { display: block; font-style: normal; font-size: 12px; color: var(--mudo); }
+
+  .fim { background: linear-gradient(135deg, var(--azul-escuro), #5b4a9e); color: #fff; border: 0; }
+  .fim h2 { color: #fff; }
+  .fim p { color: #e9e6fb; max-width: 780px; }
+  details { margin-top: 22px; font-size: 14px; color: var(--suave); }
+  details summary { cursor: pointer; font-weight: 700; color: var(--azul-escuro); }
+  details li { margin: 4px 0; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; margin-top: 10px; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--borda); }
+  td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; }
+  .tabela-wrap { overflow-x: auto; }
+
+  #dica { position: fixed; pointer-events: none; background: var(--texto); color: #fff; font-size: 13px; padding: 6px 10px; border-radius: 8px; opacity: 0; transition: opacity .12s; max-width: 240px; z-index: 10; }
+  [data-dica] { cursor: default; }
+
+  @media (max-width: 720px) {
+    section { padding: 20px 16px; }
+    .retrato, .duas { grid-template-columns: 1fr; }
+    .grade100 { max-width: 320px; }
+    .linha { grid-template-columns: 1fr; gap: 4px; }
+    .degrau { grid-template-columns: 1fr; gap: 2px; }
+    .colunas { height: 180px; gap: 5px; }
+    .eixo { gap: 5px; font-size: 12px; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <p class="faixa">Retrato do poder municipal · Eleições de 2024</p>
+    <h1>Quem governa a sua cidade? Na maioria das vezes, <em>um homem branco, de 49 anos, com diploma</em></h1>
+    <p class="lead">Em 2025, 5.553 prefeitos e prefeitas assumiram as prefeituras do país. Juntos, eles formam um retrato muito parecido entre si e bem diferente da população que governam. Role a página para conhecer esse retrato e ver como ele muda no seu estado.</p>
+    <div class="kpis" aria-label="Resumo">
+      <div class="kpi"><b>87%</b><span>são homens</span></div>
+      <div class="kpi"><b>66%</b><span>se declaram brancos</span></div>
+      <div class="kpi"><b>49 anos</b><span>é a idade típica na posse</span></div>
+      <div class="kpi"><b>60%</b><span>têm curso superior completo</span></div>
+      <div class="kpi"><b>44%</b><span>já eram prefeitos e foram reeleitos</span></div>
+    </div>
+  </header>
+
+  <!-- 1. Retrato de 100 -->
+  <section aria-labelledby="t1">
+    <span class="passo">1 · O retrato</span>
+    <h2 id="t1">Se o Brasil tivesse só 100 prefeitos, 87 seriam homens</h2>
+    <p class="sub">Cada figura representa cerca de 55 prefeituras. Escolha uma característica e veja quantas, entre 100, se encaixam nela.</p>
+    <div class="botoes" role="group" aria-label="Característica">
+      <button type="button" data-t="genero" aria-pressed="true">Gênero</button>
+      <button type="button" data-t="raca" aria-pressed="false">Raça/cor</button>
+      <button type="button" data-t="escol" aria-pressed="false">Escolaridade</button>
+      <button type="button" data-t="reeleicao" aria-pressed="false">Reeleição</button>
+    </div>
+    <div class="retrato">
+      <div class="grade100" id="grade" role="img" aria-label=""></div>
+      <div>
+        <p class="frase" id="frase" aria-live="polite"></p>
+        <ul class="legenda" id="legenda"></ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. Espelho -->
+  <section aria-labelledby="t2">
+    <span class="passo">2 · O espelho</span>
+    <h2 id="t2">Quem governa não se parece com quem é governado</h2>
+    <p class="sub">Comparação entre os prefeitos eleitos e a população brasileira medida no Censo de 2022. As mulheres são mais da metade do país, mas só 13% das prefeituras. Com o diploma acontece o contrário: ele é três vezes mais comum na prefeitura do que entre os adultos.</p>
+    <ul class="legenda" style="margin-bottom:14px">
+      <li style="--c:var(--azul)">Prefeitos eleitos em 2024</li>
+      <li style="--c:var(--lilas)">População brasileira (Censo 2022)</li>
+    </ul>
+    <div class="barras" id="espelho"></div>
+    <p class="nota">População: IBGE, Censo 2022. Mulheres: 51,5% da população. Pretos e pardos: 55,5%. Superior completo: 18,4% das pessoas com 25 anos ou mais.</p>
+  </section>
+
+  <!-- 3. Funil -->
+  <section aria-labelledby="t3">
+    <span class="passo">3 · A virada</span>
+    <h2 id="t3">Mas o "prefeito típico" completo é minoria: só 1 em cada 4</h2>
+    <p class="sub">Cada traço, sozinho, é maioria. Quando somamos todos (homem, branco, com curso superior e casado), sobram 1.359 prefeitos, 24% do total. Nenhuma prefeitura é igual à outra, mesmo que o padrão seja forte.</p>
+    <div class="funil" id="funil"></div>
+  </section>
+
+  <!-- 4. Território -->
+  <section aria-labelledby="t4">
+    <span class="passo">4 · O território</span>
+    <h2 id="t4">O retrato muda de cor conforme a região</h2>
+    <p class="sub">No Sul, 94% dos prefeitos se declaram brancos. No Norte, 66% se declaram pretos ou pardos. A presença de mulheres também varia: é maior no Nordeste (quase 1 em 5) e menor no Sudeste e no Sul (menos de 1 em 10).</p>
+    <div class="duas">
+      <div>
+        <h3>Prefeitos pretos ou pardos (%)</h3>
+        <div class="barras" id="reg-negra"></div>
+      </div>
+      <div>
+        <h3>Prefeitas mulheres (%)</h3>
+        <div class="barras" id="reg-mulher"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. Trajetória -->
+  <section aria-labelledby="t5">
+    <span class="passo">5 · A trajetória</span>
+    <h2 id="t5">Maduros e experientes: quase metade já estava na cadeira</h2>
+    <p class="sub">A maioria assumiu entre 40 e 59 anos. O mais jovem tinha 21 anos e o mais velho, 88. Quando o assunto é profissão, a resposta mais comum ao TSE foi "prefeito", seguida de empresário.</p>
+    <div class="duas">
+      <div>
+        <h3>Idade na posse (número de prefeitos)</h3>
+        <div class="colunas" id="idade"></div>
+        <div class="eixo" id="idade-eixo"></div>
+      </div>
+      <div>
+        <h3>Ocupação declarada (número de prefeitos)</h3>
+        <div class="barras" id="ocup"></div>
+      </div>
+    </div>
+    <p class="nota">Ocupação é o que a própria pessoa declarou na candidatura. "Prefeito" indica quem já ocupava o cargo e não informa a formação profissional.</p>
+  </section>
+
+  <!-- 6. Vice -->
+  <section aria-labelledby="t6">
+    <span class="passo">6 · Quem está ao lado</span>
+    <h2 id="t6">A diversidade está um passo atrás, na cadeira de vice</h2>
+    <p class="sub">Entre os vices há mais mulheres, mais pessoas pretas e menos diplomas. Mas 70% das chapas são formadas por dois homens, e só 119 têm duas mulheres.</p>
+    <ul class="legenda" style="margin-bottom:14px">
+      <li style="--c:var(--azul)">Prefeitos</li>
+      <li style="--c:var(--lilas)">Vice-prefeitos</li>
+    </ul>
+    <div class="barras" id="vice"></div>
+  </section>
+
+  <!-- 7. Seu estado -->
+  <section aria-labelledby="t7">
+    <span class="passo">7 · E no seu estado?</span>
+    <h2 id="t7">Veja o retrato de quem governa as cidades do seu estado</h2>
+    <div class="seletor">
+      <label for="uf">Estado:</label>
+      <select id="uf"></select>
+    </div>
+    <div class="ficha" id="ficha" aria-live="polite"></div>
+    <p class="nota">Abaixo de cada número aparece a média do Brasil, para comparar. Em estados com poucos municípios (como Roraima, com 15, e Amapá, com 16), uma única prefeitura muda o percentual em vários pontos.</p>
+  </section>
+
+  <section class="fim" aria-labelledby="t8">
+    <h2 id="t8">Então, quem governa os municípios?</h2>
+    <p>Na maioria, homens brancos de meia-idade, com diploma e experiência no cargo. O padrão é forte, mas não é regra: só 1 em cada 4 reúne todos esses traços, e o retrato muda bastante do Sul para o Norte. Quem decide se ele vai mudar na próxima eleição é quem vota.</p>
+  </section>
+
+  <details>
+    <summary>Sobre os dados e cuidados de leitura</summary>
+    <ul>
+      <li><strong>Fonte:</strong> TSE, candidaturas e resultados das eleições municipais ordinárias de 2024, consolidados em <code>eleitos.csv</code> (extração de 01/10/2026). Inclui 5.553 municípios. 16 ficaram de fora por falta de confirmação.</li>
+      <li><strong>Recorte:</strong> o painel mostra quem foi eleito em 2024 para assumir em 2025. Não é a lista de quem está no cargo hoje: há chapas cassadas e eleições suplementares que não aparecem aqui.</li>
+      <li><strong>Prefeitos e vices:</strong> os gráficos 1 a 5 e o seletor de estado contam só os prefeitos (uma pessoa por município). O gráfico 6 compara prefeitos e vices.</li>
+      <li><strong>Raça/cor e gênero:</strong> são declarações publicadas pelo TSE. Ninguém foi classificado por nome ou foto. 16 prefeitos não têm raça/cor informada.</li>
+      <li><strong>Reeleição:</strong> é a declaração da candidatura (ST_REELEICAO), sem auditoria do mandato anterior.</li>
+      <li><strong>População:</strong> os números da população vêm do IBGE, Censo 2022, e servem só de referência.</li>
+    </ul>
+    <div class="tabela-wrap">
+      <table id="tabela">
+        <caption style="text-align:left;font-weight:700;color:var(--azul-escuro)">Tabela: perfil dos prefeitos por região (%)</caption>
+        <thead><tr><th>Região</th><th class="n">Prefeitos</th><th class="n">Mulheres</th><th class="n">Brancos</th><th class="n">Pretos e pardos</th><th class="n">Superior</th><th class="n">Reeleitos</th><th class="n">Idade mediana</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </details>
+</main>
+<div id="dica" role="tooltip"></div>
+
+<script>
+// Dados agregados a partir de eleitos.csv (somente cargo = Prefeito, salvo indicação).
+var BR = { n: 5553, mulher: 13.2, branca: 65.8, negra: 33.5, parda: 31.2, preta: 2.3, superior: 59.5, casado: 71.0, reeleicao: 44.5, idade: 49 };
+var VICE = { mulher: 19.3, branca: 61.8, negra: 37.1, preta: 4.5, superior: 47.4, reeleicao: 28.1, idade: 50 };
+var POP = { mulher: 51.5, negra: 55.5, superior: 18.4 }; // IBGE, Censo 2022
+var REGIAO = {
+  "Norte":        { n: 449,  mulher: 16.5, branca: 33.2, negra: 65.9, superior: 56.1, reeleicao: 50.8, idade: 48 },
+  "Nordeste":     { n: 1791, mulher: 18.5, branca: 47.7, negra: 51.6, superior: 57.8, reeleicao: 47.5, idade: 47 },
+  "Centro-Oeste": { n: 467,  mulher: 13.1, branca: 60.6, negra: 39.0, superior: 60.8, reeleicao: 49.7, idade: 50 },
+  "Sudeste":      { n: 1656, mulher: 9.2,  branca: 75.7, negra: 23.4, superior: 61.6, reeleicao: 43.3, idade: 49 },
+  "Sul":          { n: 1190, mulher: 9.7,  branca: 93.7, negra: 5.9,  superior: 60.1, reeleicao: 37.1, idade: 51 }
+};
+var FUNIL = [["Todos os prefeitos", 5553], ["São homens", 4819], ["… e brancos", 3170], ["… com curso superior", 1869], ["… e casados", 1359]];
+var IDADE = [["até 29", 114], ["30–39", 925], ["40–49", 1843], ["50–59", 1534], ["60–69", 884], ["70+", 253]];
+var OCUP = [["Prefeito (já no cargo)", 1689], ["Empresário", 831], ["Agricultor", 316], ["Advogado", 282], ["Servidor público municipal", 220], ["Administrador", 197], ["Médico", 181], ["Vereador", 138]];
+// UF: [nome, região, prefeitos, % mulheres, % brancos, % pretos e pardos, % superior, % reeleitos, idade mediana]
+var UF = {"AC":["Acre","Norte",22,4.5,22.7,77.3,54.5,59.1,46],"AL":["Alagoas","Nordeste",102,23.5,47.1,52.0,53.9,52.9,48],"AM":["Amazonas","Norte",62,17.7,17.7,80.6,50.0,37.1,49],"AP":["Amapá","Norte",16,12.5,31.2,68.8,62.5,50.0,43],"BA":["Bahia","Nordeste",416,14.4,39.2,60.6,55.0,46.4,48],"CE":["Ceará","Nordeste",184,20.7,54.3,45.1,65.2,48.4,44],"ES":["Espírito Santo","Sudeste",78,2.6,67.9,32.1,56.4,41.0,52],"GO":["Goiás","Centro-Oeste",246,14.2,54.5,44.7,63.4,51.2,49],"MA":["Maranhão","Nordeste",217,19.4,36.4,63.1,53.0,51.2,48],"MG":["Minas Gerais","Sudeste",852,8.0,65.5,33.5,53.9,44.7,50],"MS":["Mato Grosso do Sul","Centro-Oeste",79,16.5,79.7,20.3,79.7,38.0,50],"MT":["Mato Grosso","Centro-Oeste",142,9.2,60.6,39.4,45.8,53.5,50],"PA":["Pará","Norte",143,19.6,30.1,69.9,58.0,54.5,48],"PB":["Paraíba","Nordeste",223,24.2,60.1,39.0,57.4,45.3,46],"PE":["Pernambuco","Nordeste",183,16.4,55.2,43.7,54.6,47.0,50],"PI":["Piauí","Nordeste",224,12.9,37.9,61.2,65.6,48.7,45],"PR":["Paraná","Sul",398,9.3,85.7,13.3,64.1,41.0,52],"RJ":["Rio de Janeiro","Sudeste",90,15.6,87.8,12.2,67.8,43.3,47],"RN":["Rio Grande do Norte","Nordeste",167,25.1,64.7,34.1,57.5,46.7,45],"RO":["Rondônia","Norte",52,5.8,46.2,51.9,53.8,48.1,49],"RR":["Roraima","Norte",15,26.7,40.0,46.7,66.7,66.7,46],"RS":["Rio Grande do Sul","Sul",497,7.8,98.2,1.6,56.5,37.4,51],"SC":["Santa Catarina","Sul",295,13.2,96.9,3.1,60.7,31.2,50],"SE":["Sergipe","Nordeste",75,17.3,49.3,50.7,60.0,40.0,48],"SP":["São Paulo","Sudeste",636,10.7,88.5,10.5,71.7,41.7,49],"TO":["Tocantins","Norte",139,18.0,39.6,60.4,56.1,51.1,47]};
+
+function fmt(x, d) { return x.toLocaleString("pt-BR", { minimumFractionDigits: d || 0, maximumFractionDigits: d || 0 }); }
+function el(tag, attrs, html) { var e = document.createElement(tag); for (var k in attrs) e.setAttribute(k, attrs[k]); if (html != null) e.innerHTML = html; return e; }
+
+// Tooltip
+var dica = document.getElementById("dica");
+document.addEventListener("mousemove", function (ev) {
+  var alvo = ev.target.closest && ev.target.closest("[data-dica]");
+  if (!alvo) { dica.style.opacity = 0; return; }
+  dica.textContent = alvo.getAttribute("data-dica");
+  var x = Math.min(ev.clientX + 14, window.innerWidth - dica.offsetWidth - 8);
+  dica.style.left = x + "px"; dica.style.top = (ev.clientY + 16) + "px"; dica.style.opacity = 1;
+});
+
+// 1. Retrato de 100
+var RETRATOS = {
+  genero:   { partes: [[87, "var(--azul)", "Homens"], [13, "var(--lilas)", "Mulheres"]],
+              frase: "<b>87</b> seriam homens e <b>13</b> seriam mulheres." },
+  raca:     { partes: [[66, "var(--azul)", "Brancos"], [31, "var(--lilas)", "Pardos"], [2, "#5b4a9e", "Pretos"], [1, "var(--neutro)", "Amarelos, indígenas ou sem informação"]],
+              frase: "<b>66</b> se declarariam brancos, <b>31</b> pardos e só <b>2</b> pretos." },
+  escol:    { partes: [[60, "var(--azul)", "Superior completo"], [40, "var(--lilas)", "Sem curso superior completo"]],
+              frase: "<b>60</b> teriam curso superior completo. Entre os adultos brasileiros, seriam 18." },
+  reeleicao:{ partes: [[44, "var(--azul)", "Reeleitos"], [56, "var(--lilas)", "Primeiro mandato consecutivo"]],
+              frase: "<b>44</b> já eram prefeitos e foram reeleitos. Os outros <b>56</b> chegaram agora." }
+};
+var grade = document.getElementById("grade");
+for (var i = 0; i < 100; i++) grade.appendChild(el("i"));
+function retrato(t) {
+  var r = RETRATOS[t], celulas = grade.children, k = 0;
+  r.partes.forEach(function (p) { for (var j = 0; j < p[0]; j++, k++) { celulas[k].style.background = p[1]; celulas[k].setAttribute("data-dica", p[2]); } });
+  document.getElementById("frase").innerHTML = "Entre 100 prefeitos, " + r.frase;
+  grade.setAttribute("aria-label", r.partes.map(function (p) { return p[0] + " " + p[2]; }).join(", "));
+  var leg = document.getElementById("legenda"); leg.innerHTML = "";
+  r.partes.forEach(function (p) { leg.appendChild(el("li", { style: "--c:" + p[1] }, p[2] + " (" + p[0] + ")")); });
+  document.querySelectorAll(".botoes button").forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.t === t); });
+}
+document.querySelectorAll(".botoes button").forEach(function (b) { b.addEventListener("click", function () { retrato(b.dataset.t); }); });
+retrato("genero");
+
+// Barra simples (escala 0–max)
+function barra(valor, max, classe, texto, dicaTxt) {
+  var trilho = el("div", { class: "trilho", "data-dica": dicaTxt || texto });
+  var w = 100 * valor / max;
+  trilho.appendChild(el("div", { class: "barra " + (classe || ""), style: "width:" + w + "%" }));
+  // Rótulo fora da barra; se a barra for longa, o rótulo entra nela para não vazar da tela.
+  var dentro = w > 78;
+  trilho.appendChild(el("span", { class: "valor" + (dentro ? " dentro" : ""), style: dentro ? "right:" + (100 - w) + "%" : "left:" + w + "%" }, texto));
+  return trilho;
+}
+function linhaPar(rotulo, a, b, nomeA, nomeB) {
+  var l = el("div", { class: "linha par" });
+  l.appendChild(el("div", { class: "rot" }, rotulo));
+  var c = el("div");
+  c.appendChild(barra(a, 100, "", fmt(a, 1) + "%", nomeA + ": " + fmt(a, 1) + "%"));
+  c.appendChild(barra(b, 100, "lilas", fmt(b, 1) + "%", nomeB + ": " + fmt(b, 1) + "%"));
+  l.appendChild(c); return l;
+}
+
+// 2. Espelho
+var esp = document.getElementById("espelho");
+[["Mulheres", BR.mulher, POP.mulher], ["Pretos e pardos", BR.negra, POP.negra], ["Curso superior completo", BR.superior, POP.superior]]
+  .forEach(function (r) { esp.appendChild(linhaPar(r[0], r[1], r[2], "Prefeitos", "População")); });
+
+// 3. Funil
+var fun = document.getElementById("funil");
+FUNIL.forEach(function (f) {
+  var d = el("div", { class: "degrau" });
+  d.appendChild(el("div", { class: "rot" }, f[0] + "<small>" + fmt(100 * f[1] / BR.n) + "% do total</small>"));
+  d.appendChild(barra(f[1], FUNIL[0][1], "", fmt(f[1]), f[0] + ": " + fmt(f[1]) + " prefeitos"));
+  fun.appendChild(d);
+});
+
+// 4. Regiões (ordenadas pelo valor)
+function regioes(id, campo) {
+  var alvo = document.getElementById(id);
+  Object.keys(REGIAO).sort(function (a, b) { return REGIAO[b][campo] - REGIAO[a][campo]; }).forEach(function (r) {
+    var v = REGIAO[r][campo], l = el("div", { class: "linha" });
+    l.appendChild(el("div", { class: "rot" }, r + "<small>" + fmt(REGIAO[r].n) + " prefeituras</small>"));
+    l.appendChild(barra(v, 100, "", fmt(v, 1) + "%", r + ": " + fmt(v, 1) + "%"));
+    alvo.appendChild(l);
+  });
+}
+regioes("reg-negra", "negra"); regioes("reg-mulher", "mulher");
+document.querySelectorAll("#reg-negra .linha, #reg-mulher .linha").forEach(function (l) { l.style.gridTemplateColumns = "120px 1fr"; });
+
+// 5. Idade e ocupação
+var maxI = Math.max.apply(null, IDADE.map(function (x) { return x[1]; }));
+var cols = document.getElementById("idade"), eixo = document.getElementById("idade-eixo");
+IDADE.forEach(function (x) {
+  var c = el("div", { class: "col" + (x[1] === maxI ? " pico" : ""), style: "height:" + (100 * x[1] / maxI) + "%", "data-dica": x[0] + " anos: " + fmt(x[1]) + " prefeitos (" + fmt(100 * x[1] / BR.n, 1) + "%)" });
+  c.appendChild(el("span", {}, fmt(x[1])));
+  cols.appendChild(c); eixo.appendChild(el("div", {}, x[0]));
+});
+var oc = document.getElementById("ocup");
+OCUP.forEach(function (o, i) {
+  var l = el("div", { class: "linha" });
+  l.style.gridTemplateColumns = "150px 1fr";
+  l.appendChild(el("div", { class: "rot" }, o[0]));
+  l.appendChild(barra(o[1], OCUP[0][1] * 1.15, i === 0 ? "lilas" : "", fmt(o[1]), o[0] + ": " + fmt(o[1]) + " (" + fmt(100 * o[1] / BR.n, 1) + "%)"));
+  oc.appendChild(l);
+});
+
+// 6. Vice
+var vic = document.getElementById("vice");
+[["Mulheres", BR.mulher, VICE.mulher], ["Pretos", BR.preta, VICE.preta], ["Pretos e pardos", BR.negra, VICE.negra], ["Curso superior completo", BR.superior, VICE.superior]]
+  .forEach(function (r) { vic.appendChild(linhaPar(r[0], r[1], r[2], "Prefeitos", "Vices")); });
+
+// 7. Seu estado
+var sel = document.getElementById("uf");
+sel.appendChild(el("option", { value: "BR" }, "Brasil (todos os estados)"));
+Object.keys(UF).sort(function (a, b) { return UF[a][0].localeCompare(UF[b][0], "pt-BR"); })
+  .forEach(function (u) { sel.appendChild(el("option", { value: u }, UF[u][0])); });
+function ficha(u) {
+  var d = u === "BR" ? ["Brasil", "", BR.n, BR.mulher, BR.branca, BR.negra, BR.superior, BR.reeleicao, BR.idade] : UF[u];
+  var itens = [
+    [fmt(d[2]), "prefeituras", null],
+    [fmt(d[3], 1) + "%", "mulheres", fmt(BR.mulher, 1) + "%"],
+    [fmt(d[4], 1) + "%", "brancos", fmt(BR.branca, 1) + "%"],
+    [fmt(d[5], 1) + "%", "pretos e pardos", fmt(BR.negra, 1) + "%"],
+    [fmt(d[6], 1) + "%", "com curso superior", fmt(BR.superior, 1) + "%"],
+    [fmt(d[7], 1) + "%", "reeleitos", fmt(BR.reeleicao, 1) + "%"],
+    [d[8] + " anos", "idade mediana", BR.idade + " anos"]
+  ];
+  var f = document.getElementById("ficha"); f.innerHTML = "";
+  itens.forEach(function (it) { f.appendChild(el("div", {}, "<b>" + it[0] + "</b><span>" + it[1] + "</span>" + (it[2] && u !== "BR" ? "<em>Brasil: " + it[2] + "</em>" : ""))); });
+}
+sel.addEventListener("change", function () { ficha(sel.value); });
+ficha("BR");
+
+// Tabela acessível
+var tb = document.querySelector("#tabela tbody");
+Object.keys(REGIAO).forEach(function (r) {
+  var x = REGIAO[r];
+  tb.appendChild(el("tr", {}, "<td>" + r + "</td><td class='n'>" + fmt(x.n) + "</td><td class='n'>" + fmt(x.mulher, 1) + "</td><td class='n'>" + fmt(x.branca, 1) + "</td><td class='n'>" + fmt(x.negra, 1) + "</td><td class='n'>" + fmt(x.superior, 1) + "</td><td class='n'>" + fmt(x.reeleicao, 1) + "</td><td class='n'>" + x.idade + "</td>"));
+});
+tb.appendChild(el("tr", { style: "font-weight:700" }, "<td>Brasil</td><td class='n'>" + fmt(BR.n) + "</td><td class='n'>" + fmt(BR.mulher, 1) + "</td><td class='n'>" + fmt(BR.branca, 1) + "</td><td class='n'>" + fmt(BR.negra, 1) + "</td><td class='n'>" + fmt(BR.superior, 1) + "</td><td class='n'>" + fmt(BR.reeleicao, 1) + "</td><td class='n'>" + BR.idade + "</td>"));
+</script>
+</body>
+</html>
