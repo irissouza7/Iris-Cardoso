@@ -47,3 +47,19 @@ azul e lilás, que era a exigência do Prompt 1.)
 ```
 
 **O que funcionou / o que mudei:** a faixa do topo dizia "Portal da Transparência", o que podia parecer um órgão real. Ela passou a dizer "Retrato do poder municipal · Eleições de 2024". Na `skill.md`, tirei qualquer menção a eleições e prefeitos: os exemplos agora são genéricos ("A maioria dos clientes volta em menos de 30 dias"), e tudo o que é específico deste trabalho ficou no `claude.md`.
+
+---
+
+## Prompts 3 a 7: entrega no GitHub
+
+```
+vc criou essa pasta no meu github?
+quero sim - faça o fork
+onde eu clico em fork no repositório https://github.com/prof-danny-idp/storytelling-dados-atividade1?
+pronto
+a fusão do pull request não finalizou ainda [...] - me ajude
+valida a entrega - foi rejeitada pois foi como rascunho
+manda um commit
+```
+
+**O que funcionou / o que mudei:** o Claude não tinha permissão para fazer o fork do repositório do professor. Então eu fiz o fork, e ele enviou a pasta `entregas/iris-cardoso/` para o meu fork. Abri o PR, mas ele ficou como rascunho (draft) e foi rejeitado. Marquei como "Ready for review" e pedi um commit novo, este registro, para a verificação automática rodar de novo. Lição: o merge é do professor e não acontece sozinho, e o PR precisa ser aberto como "Create pull request", não como "Create draft pull request".
